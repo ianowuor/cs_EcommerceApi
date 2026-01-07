@@ -61,6 +61,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles(); // Enables the app to serve files from wwwroot
+
 app.UseAuthentication();
 app.UseAuthorization();
 

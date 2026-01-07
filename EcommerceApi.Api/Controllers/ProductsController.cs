@@ -137,4 +137,37 @@ public class ProductsController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPost("{id}/upload-image")]
+    public async Task<IActionResult> UploadImage(int id, [FromForm] UploadImageDto input)
+    {
+        var product = await _context.Products.FindAsync(id);
+        if (product == null) return NotFound("Product not found");
+
+        if (input.File == null || input.File.Length == 0)
+            return BadRequest("No file uploaded");
+
+        // 1. Validate File Extension
+        var permittedExtensions = new[] { ".jpg", ".png", ".jpeg" };
+        var extension = Path.GetExtension(input.File.FileName).ToLowerInvariant();
+
+        if (string.IsNullOrEmpty(extension) || !permittedExtensions.Contains(extension))
+            return BadRequest("Invalid file type. Only JPG, JPEG, and PNG are allowed.");
+
+        // 2. Create a Unique Filename
+        var fileName = $"{Guid.NewGuid()}{extension}";
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", fileName);
+
+        // 3. Save to Disk
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await input.File.CopyToAsync(stream);
+        }
+
+        // 4. Update Database with the relative URL
+        product.ImageUrl = $"/images/{fileName}";
+        await _context.SaveChangesAsync();
+
+        return Ok(new { ImageUrl = product.ImageUrl });
+    }
 }
