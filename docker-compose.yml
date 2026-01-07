@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: ecommerce_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: blindspot
+      POSTGRESS_DB: ecommerce_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/postgres_data
+
+volumes:
+  postgres_data:
