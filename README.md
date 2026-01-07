@@ -16,7 +16,7 @@ A high-performance, secure e-commerce RESTful API built with **.NET 10**, featur
 * **Security:** ASP.NET Core Identity + JWT Bearer Authentication
 * **Storage:** Local static file hosting (wwwroot)
 
-## 🔧 Getting Started
+## Getting Started
 1. **Prerequisites:** Ensure [.NET 10 SDK](https://dotnet.microsoft.com/download) and Docker are installed.
 2. **Infrastructure:** Start the database container:
    ```bash
@@ -27,10 +27,3 @@ A high-performance, secure e-commerce RESTful API built with **.NET 10**, featur
 4. **Run Project:**
     ```bash 
     dotnet run
-
-Feature,Endpoint,Method,Auth Required
-Register,/api/account/register,POST,No
-Login,/api/account/login,POST,No
-List Products,/api/products,GET,Yes
-Create Product,/api/products,POST,Yes
-Upload Image,/api/products/{id}/upload-image,POST,Yes
