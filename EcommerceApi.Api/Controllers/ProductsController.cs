@@ -3,9 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using EcommerceApi.Api.Data;
 using EcommerceApi.Api.Models;
 using EcommerceApi.Api.Dtos;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EcommerceApi.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase

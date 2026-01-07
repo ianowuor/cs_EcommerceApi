@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using EcommerceApi.Api.Models;
+using EcommerceApi.Api.Interfaces;
+using EcommerceApi.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +46,8 @@ builder.Services.AddAuthentication(options => {
         )
     };
 });
+
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 
 var app = builder.Build();
