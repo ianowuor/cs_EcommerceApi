@@ -47,4 +47,38 @@ public class ProductsController: ControllerBase
 
         return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
     }
+
+    // 4. PUT: api/products/5 (Update)
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutProduct(int id, Product product)
+    {
+        if (id != product.Id) return BadRequest("ID mismatch");
+
+        _context.Entry(product).State = EntityState.Modified;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!_context.Products.Any(e => e.Id == id)) return NotFound();
+            throw;
+        }
+
+        return NoContent(); // 204 Success, but no data to send back
+    }
+
+    // 5. DELETE: api/products/5
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteProduct(int id)
+    {
+        var product = await _context.Products.FindAsync(id);
+        if (product == null) return NotFound();
+
+        _context.Products.Remove(product);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 }
