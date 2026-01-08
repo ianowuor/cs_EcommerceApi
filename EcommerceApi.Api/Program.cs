@@ -81,11 +81,14 @@ using (var scope = app.Services.CreateScope())
 
         // Call our Seed method
         await Seed.SeedData(context);
+
+        Console.WriteLine("--> Data Seeding Complete.");
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred during migration or seeding.");
+        Console.WriteLine($"--> Error during seeding: {ex.Message}");
     }
 }
 

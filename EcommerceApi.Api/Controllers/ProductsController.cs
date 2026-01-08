@@ -23,18 +23,24 @@ public class ProductsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
     {
-        var products = await _context.Products.ToListAsync();
+        // 1. Use .Include() to pull in the Category data from the other table
+        var products = await _context.Products
+            .Include(p => p.Category) 
+            .ToListAsync();
 
         // Map the list of Models to a list of DTOs
-        return Ok(products.Select(p => new ProductDto
+        var productDtos = products.Select(p => new ProductDto
         {
             Id = p.Id,
             Name = p.Name,
             Description = p.Description,
             Price = p.Price,
-            StockQuantity = p.StockQuantity,
-            ImageUrl = p.ImageUrl
-        }));
+            ImageUrl = p.ImageUrl,
+            // Access the included Category object to get the Name
+            CategoryName = p.Category?.Name ?? "No Category" 
+        });
+
+        return Ok(productDtos);
     }
 
     // GET: api/products/5
