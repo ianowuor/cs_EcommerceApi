@@ -68,4 +68,27 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Create a scope to get the DbContext
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+
+        // This ensures the DB is created and migrations are applied
+        await context.Database.MigrateAsync();
+
+        // Call our Seed method
+        await Seed.SeedData(context);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred during migration or seeding.");
+    }
+}
+
+
+
 app.Run();

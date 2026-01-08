@@ -9,4 +9,8 @@ public class Product
     public int StockQuantity { get; set; }
     public string? ImageUrl { get; set; } // For your image upload task later
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int CategoryId { get; set; } // Foreign key
+
+    // Navigation Property: Each product belongs to one Category
+    public Category? Category { get; set; }
 }
