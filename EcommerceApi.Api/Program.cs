@@ -7,6 +7,7 @@ using System.Text;
 using EcommerceApi.Api.Models;
 using EcommerceApi.Api.Interfaces;
 using EcommerceApi.Api.Services;
+using EcommerceApi.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,12 +53,15 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 
 var app = builder.Build();
 
+app.UseMiddleware<ExceptionMiddleware>();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     
 }
+
 
 app.UseHttpsRedirection();
 

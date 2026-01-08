@@ -21,7 +21,7 @@ A high-performance, secure e-commerce RESTful API built with **.NET 10**, featur
 2. **Infrastructure:** Start the database container:
    ```bash
    docker-compose up -d
-3. **Database Setup:** AApply migrations:
+3. **Database Setup:** Apply migrations:
     ```bash
     dotnet ef database update
 4. **Run Project:**

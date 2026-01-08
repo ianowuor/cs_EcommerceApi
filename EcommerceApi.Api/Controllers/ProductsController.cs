@@ -39,7 +39,6 @@ public class ProductsController : ControllerBase
             // Access the included Category object to get the Name
             CategoryName = p.Category?.Name ?? "No Category" 
         });
-
         return Ok(productDtos);
     }
 
