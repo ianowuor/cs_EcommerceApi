@@ -5,6 +5,7 @@ using EcommerceApi.Api.Models;
 using EcommerceApi.Api.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using EcommerceApi.Api.Services;
+using EcommerceApi.Api.Helpers;
 
 namespace EcommerceApi.Api.Controllers;
 
@@ -24,25 +25,70 @@ public class ProductsController : ControllerBase
 
     // GET: api/products
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts([FromQuery] ProductParams productParams)
     {
-        // 1. Use .Include() to pull in the Category data from the other table
-        var products = await _context.Products
-            .Include(p => p.Category) 
-            .ToListAsync();
+        // 1. Start with a "Queryable" - this hasn't hit the DB yet!
+    var query = _context.Products
+        .Include(p => p.Category)
+        .AsQueryable();
 
-        // Map the list of Models to a list of DTOs
-        var productDtos = products.Select(p => new ProductDto
-        {
-            Id = p.Id,
-            Name = p.Name,
-            Description = p.Description,
-            Price = p.Price,
-            ImageUrl = p.ImageUrl,
-            // Access the included Category object to get the Name
-            CategoryName = p.Category?.Name ?? "No Category" 
-        });
-        return Ok(productDtos);
+    // 2. Filter by Category if provided
+    if (productParams.CategoryId.HasValue)
+    {
+        query = query.Where(p => p.CategoryId == productParams.CategoryId);
+    }
+
+    // 3. Search by Name
+    if (!string.IsNullOrEmpty(productParams.Search))
+    {
+        query = query.Where(p => p.Name.ToLower().Contains(productParams.Search.ToLower()));
+    }
+
+    // 4. Sort logic
+    query = productParams.Sort switch
+    {
+        "priceAsc" => query.OrderBy(p => p.Price),
+        "priceDesc" => query.OrderByDescending(p => p.Price),
+        _ => query.OrderBy(p => p.Name) // Default sort
+    };
+
+    // Get total count BEFORE pagination
+    var totalItems = await query.CountAsync();
+
+    // 5. Apply Pagination
+    var products = await query
+        .Skip(productParams.PageSize * (productParams.PageNumber - 1))
+        .Take(productParams.PageSize)
+        .ToListAsync();
+
+    // Calculate total pages
+    var totalPages = (int)Math.Ceiling(totalItems / (double)productParams.PageSize);
+
+    // Create the Header Object
+    var paginationHeader = new PaginationHeader(
+        productParams.PageNumber, 
+        productParams.PageSize, 
+        totalItems, 
+        totalPages);
+
+    // 5. Add the header to the Response
+    Response.Headers.Append("Pagination", System.Text.Json.JsonSerializer.Serialize(paginationHeader));
+    // Important for CORS (allows frontend to read the custom header)
+    Response.Headers.Append("Access-Control-Expose-Headers", "Pagination");
+
+    // 6. Map to DTO
+    var productDtos = products.Select(p => new ProductDto
+    {
+        Id = p.Id,
+        Name = p.Name,
+        Description = p.Description,
+        Price = p.Price,
+        StockQuantity = p.StockQuantity,
+        ImageUrl = p.ImageUrl,
+        CategoryName = p.Category?.Name ?? "No Category"
+    });
+
+    return Ok(productDtos);
     }
 
     // GET: api/products/5
