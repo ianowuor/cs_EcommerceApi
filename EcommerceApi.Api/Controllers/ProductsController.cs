@@ -4,6 +4,7 @@ using EcommerceApi.Api.Data;
 using EcommerceApi.Api.Models;
 using EcommerceApi.Api.Dtos;
 using Microsoft.AspNetCore.Authorization;
+using EcommerceApi.Api.Services;
 
 namespace EcommerceApi.Api.Controllers;
 
@@ -13,10 +14,12 @@ namespace EcommerceApi.Api.Controllers;
 public class ProductsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly ImageService _imageService;
 
-    public ProductsController(ApplicationDbContext context)
+    public ProductsController(ApplicationDbContext context, ImageService imageService)
     {
         _context = context;
+        _imageService = imageService;
     }
 
     // GET: api/products
@@ -46,7 +49,10 @@ public class ProductsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<ProductDto>> GetProduct(int id)
     {
-        var product = await _context.Products.FindAsync(id);
+        // var product = await _context.Products.FindAsync(id);
+        var product = await _context.Products
+        .Include(p => p.Category) 
+        .FirstOrDefaultAsync(p => p.Id == id);
 
         if (product == null)
         {
@@ -61,13 +67,14 @@ public class ProductsController : ControllerBase
             Description = product.Description,
             Price = product.Price,
             StockQuantity = product.StockQuantity,
-            ImageUrl = product.ImageUrl
+            ImageUrl = product.ImageUrl,
+            CategoryName = product.Category?.Name ?? "No Category"
         };
     }
 
     // POST: api/products
     [HttpPost]
-    public async Task<ActionResult<ProductDto>> PostProduct(ProductCreateDto productCreateDto)
+    public async Task<ActionResult<ProductDto>> PostProduct([FromForm] ProductCreateDto productCreateDto, IFormFile? imageFile)
     {
         // 1. Map CreateDto -> Model (Preparing for Database)
         var product = new Product
@@ -75,11 +82,24 @@ public class ProductsController : ControllerBase
             Name = productCreateDto.Name,
             Description = productCreateDto.Description,
             Price = productCreateDto.Price,
+            CategoryId = productCreateDto.CategoryId,
             StockQuantity = productCreateDto.StockQuantity
         };
 
+        if (imageFile != null)
+        {
+            // Save image and get the path back
+            product.ImageUrl = await _imageService.SaveImageAsync(imageFile);
+        }
+
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
+
+        var productWithCategory = await _context.Products
+            .Include(p => p.Category)
+            .FirstOrDefaultAsync(p => p.Id == product.Id);
+
+        if (productWithCategory == null) return BadRequest("Failed to create product");
 
         // 2. Map Model -> ProductDto (Preparing for User Response)
         var responseDto = new ProductDto
@@ -89,7 +109,8 @@ public class ProductsController : ControllerBase
             Description = product.Description,
             Price = product.Price,
             StockQuantity = product.StockQuantity,
-            ImageUrl = product.ImageUrl
+            ImageUrl = product.ImageUrl,
+            CategoryName = productWithCategory.Category?.Name ?? "No Category"
         };
 
         return CreatedAtAction(nameof(GetProduct), new { id = responseDto.Id }, responseDto);
